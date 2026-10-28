@@ -88,7 +88,7 @@ const NAMES=new Set(ITEMS.map(i=>i.n));
 const RM=[['onion','No onions'],['mayo','No mayo'],['lettuce','No lettuce'],['tomato','No tomato'],['pickle','No pickles'],['mustard','No mustard'],['chili','No chili'],['cheese','No cheese'],['tartar','No tartar sauce'],['sauerkraut','No sauerkraut'],['green pepper','No green peppers'],['mushroom','No mushrooms'],['legend sauce','No Legend sauce'],['gyro sauce','No gyro sauce'],['russian','No Russian dressing'],['cole slaw','No cole slaw'],['olives','No olives'],['pepperoncini','No pepperoncini'],['cucumber','No cucumber'],['egg','No egg'],['bacon','No bacon'],['swiss','No Swiss cheese'],['american','No American cheese'],['cheddar','No Cheddar cheese'],['feta','No feta'],['steak sauce','No steak sauce'],['pita bread','No pita bread'],['sesame','No sesame seed bun (plain bun)']];
 function mods(it){
   const s=it.s,t=(it.d+' '+(['Flame Broiled Burgers','Deli Sandwiches'].includes(s)?it.sn:'')).toLowerCase(),g=[];
-  if(/cake/i.test(it.n))g.push({t:'Cake',req:1,o:[['Pound Cake',0],['Caramel Cake',0]]});
+  if(s=='Desserts'&&/\bcakes?\b/i.test(it.n))g.push({t:'Cake',req:1,o:[['Pound Cake',0],['Caramel Cake',0]]});
   if(['Sides','Beverages','Desserts'].includes(s))return g;
   if(t.includes('any style'))g.push({t:'Eggs',req:1,o:['Scrambled','Over easy','Over medium','Over hard','Sunny side up'].map(x=>[x,0])});
   if(/choice of ham, 4 strips of bacon or 4 sausage/.test(t))g.push({t:'Meat',req:1,o:[['Ham',0],['Bacon (4 strips)',0],['Sausage (4 links)',0]]});
@@ -148,6 +148,7 @@ render();
 const idx=n=>ITEMS.findIndex(i=>i.n==n);
 if(location.hash=='#demo-modal'){openItem(idx('Cheeseburger'));document.querySelectorAll('#sheet input[name=g0]')[0].checked=true;upd();$('#sheet .rmf').scrollIntoView()}
 if(location.hash=='#demo-cake'){openItem(idx('Cake'))}
+if(location.hash=='#demo-pancake'){openItem(idx('Pancakes (3)'))}
 if(location.hash=='#demo-omelette'){openItem(idx('Western Omelette'));const f=[...document.querySelectorAll('#sheet fieldset')].find(x=>x.textContent.includes('Toast:'));f.querySelector('input').click();f.scrollIntoView()}
 if(location.hash=='#demo-cart'){cart=[{n:'Cheeseburger',p:6.5,m:[['No onions',0],['Make it Deluxe',5.45],['Mushrooms',2]],q:2,si:'Light salt, well done'},{n:'Coney Island',p:3.25,m:[['No onions',0],['No mustard',0]],q:1,si:''},{n:'Greek Salad',p:12.99,m:[['Ranch dressing',0],['A1 Sauce',0]],q:1,si:''}];render();openCart()}
 if(location.hash=='#demo-test'){localStorage.clear();cart=[];openItem(idx('Cheeseburger'));const S=t=>[...document.querySelectorAll('#sheet .opt')].find(l=>l.textContent.includes(t)).querySelector('input').click();S('No onions');S('Make it Deluxe');S('Add Chili & Cheese');S('Mushrooms');qty(1);addCur();openItem(idx('Greek Salad'));let b1=$('#addb').disabled;S('Ranch');addCur();openItem(idx('Cake'));const b2=$('#addb').disabled;S('Caramel Cake');addCur();const ck=cart[cart.length-1].m.map(m=>m[0]).join();const exp=(6.5+5.45+3.99+2)*2+12.99+4.85;b1=b1&&b2&&ck=='Caramel Cake';document.title=`TEST ${Math.abs(sub()-exp)<.001&&b1?'PASS':'FAIL'} got ${money(sub())} exp ${money(exp)} reqBlocked=${b1} count=${$('.cc').textContent} stored=${JSON.parse(localStorage.getItem('legendsCart')).length}`}
