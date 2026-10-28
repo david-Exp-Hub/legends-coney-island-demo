@@ -94,6 +94,7 @@ function mods(it){
   if(/choice of ham, 4 strips of bacon or 4 sausage/.test(t))g.push({t:'Meat',req:1,o:[['Ham',0],['Bacon (4 strips)',0],['Sausage (4 links)',0]]});
   if(t.includes('hash browns, grits or pancakes'))g.push({t:'Side',req:1,o:[['Hash browns',0],['Grits',0],['Pancakes',0]]});
   else if(t.includes('hash browns or grits')||s=='Omelettes')g.push({t:'Side',req:1,o:[['Hash browns',0],['Grits',0]]});
+  if(['Breakfast Specials','From the Griddle','Omelettes'].includes(s)&&!/pancake|hotcake|toast/i.test(it.n)&&!g.some(x=>/toast/i.test(x.t)))g.push({t:'Toast',req:1,o:[['White',0],['Brown',0]]});
   if(s=='Dinners')g.push({t:'Salad or slaw',req:1,o:[['Salad',0],['Cole slaw',0]]},{t:'Potato',req:1,o:[['Hash brown',0],['Fries',0]]});
   if(s=='Deli Sandwiches')g.push({t:'Bread',req:1,o:[['Rye',0],['Onion roll',0]]});
   if(s=='Salads')g.push({t:'Dressing',req:1,o:['French','Thousand Island','Greek','Italian','Ranch'].map(x=>[x,0])});
@@ -118,12 +119,12 @@ document.body.insertAdjacentHTML('beforeend',`<div id="ov" onclick="closeAll()">
 function openItem(i){
   const it=ITEMS[i];cur={i,q:1,g:mods(it)};
   $('#sheet').innerHTML=`<div class="ph"><div><h4>${it.n}</h4><div class="bp">${money(it.p)}</div></div><button class="x" onclick="closeAll()" aria-label="Close">✕</button></div>
-  <div class="pb">${it.d?`<p class="pd">${it.d}</p>`:''}${cur.g.map((g,gi)=>`<fieldset${g.rm?' class="rmf"':''}><legend>${g.rm?'🚫 Remove (tap what to leave off)':g.t}${g.req?' <em>Required</em>':''}</legend>${g.o.map((o,oi)=>`<label class="opt"><input type="${g.multi?'checkbox':'radio'}" name="g${gi}" value="${oi}" ${!g.multi&&!g.req&&oi==0?'checked':''} onchange="upd()"><span>${o[0]}</span><b>${o[1]?'+'+money(o[1]):''}</b></label>`).join('')}</fieldset>`).join('')}
+  <div class="pb">${it.d?`<p class="pd">${it.d}</p>`:''}${cur.g.map((g,gi)=>`<fieldset${g.rm?' class="rmf"':''}><legend>${g.rm?'🚫 Remove (tap what to leave off)':g.t=='Toast'?'Toast: White or Brown':g.t}${g.req?' <em>Required</em>':''}</legend>${g.o.map((o,oi)=>`<label class="opt"><input type="${g.multi?'checkbox':'radio'}" name="g${gi}" value="${oi}" ${!g.multi&&!g.req&&oi==0?'checked':''} onchange="upd()"><span>${o[0]}</span><b>${o[1]?'+'+money(o[1]):''}</b></label>`).join('')}</fieldset>`).join('')}
   <fieldset><legend><label for="si">Leave off / special requests</label></legend><textarea id="si" rows="2" maxlength="140" placeholder="e.g. no salt, well done, sauce on the side"></textarea></fieldset></div>
   <div class="pf"><div class="step"><button onclick="qty(-1)" aria-label="Less">−</button><span id="q">1</span><button onclick="qty(1)" aria-label="More">+</button></div><button id="addb" class="primary" onclick="addCur()">Add</button></div>`;
   show('#sheet');upd();
 }
-function sel(){const it=ITEMS[cur.i],m=[];let ok=true;cur.g.forEach((g,gi)=>{const c=[...document.querySelectorAll(`#sheet input[name=g${gi}]:checked`)];if(g.req&&!c.length)ok=false;c.forEach(x=>{const o=g.o[x.value];if(o[0]!='No chili added')m.push([(g.t=='Eggs'?'Eggs '+o[0].toLowerCase():g.t.startsWith('Dressing')?o[0]+' dressing':o[0]),o[1]])})});return{it,m,ok}}
+function sel(){const it=ITEMS[cur.i],m=[];let ok=true;cur.g.forEach((g,gi)=>{const c=[...document.querySelectorAll(`#sheet input[name=g${gi}]:checked`)];if(g.req&&!c.length)ok=false;c.forEach(x=>{const o=g.o[x.value];if(o[0]!='No chili added')m.push([(g.t=='Eggs'?'Eggs '+o[0].toLowerCase():g.t=='Toast'?o[0]+' toast':g.t.startsWith('Dressing')?o[0]+' dressing':o[0]),o[1]])})});return{it,m,ok}}
 function upd(){const{it,m,ok}=sel();const tot=(it.p+m.reduce((a,x)=>a+x[1],0))*cur.q;const b=$('#addb');b.textContent=ok?`Add ${cur.q} · ${money(tot)}`:'Choose required options';b.disabled=!ok}
 function qty(d){cur.q=Math.max(1,cur.q+d);$('#q').textContent=cur.q;upd()}
 function addCur(){const{it,m,ok}=sel();if(!ok)return;const si=$('#si').value.trim();cart.push({n:it.n,p:it.p,m,q:cur.q,si});save();closeAll();toast(`Added ${it.n}`)}
@@ -147,6 +148,7 @@ render();
 const idx=n=>ITEMS.findIndex(i=>i.n==n);
 if(location.hash=='#demo-modal'){openItem(idx('Cheeseburger'));document.querySelectorAll('#sheet input[name=g0]')[0].checked=true;upd();$('#sheet .rmf').scrollIntoView()}
 if(location.hash=='#demo-cake'){openItem(idx('Cake'))}
+if(location.hash=='#demo-omelette'){openItem(idx('Western Omelette'));const f=[...document.querySelectorAll('#sheet fieldset')].find(x=>x.textContent.includes('Toast:'));f.querySelector('input').click();f.scrollIntoView()}
 if(location.hash=='#demo-cart'){cart=[{n:'Cheeseburger',p:6.5,m:[['No onions',0],['Make it Deluxe',5.45],['Mushrooms',2]],q:2,si:'Light salt, well done'},{n:'Coney Island',p:3.25,m:[['No onions',0],['No mustard',0]],q:1,si:''},{n:'Greek Salad',p:12.99,m:[['Ranch dressing',0],['A1 Sauce',0]],q:1,si:''}];render();openCart()}
 if(location.hash=='#demo-test'){localStorage.clear();cart=[];openItem(idx('Cheeseburger'));const S=t=>[...document.querySelectorAll('#sheet .opt')].find(l=>l.textContent.includes(t)).querySelector('input').click();S('No onions');S('Make it Deluxe');S('Add Chili & Cheese');S('Mushrooms');qty(1);addCur();openItem(idx('Greek Salad'));let b1=$('#addb').disabled;S('Ranch');addCur();openItem(idx('Cake'));const b2=$('#addb').disabled;S('Caramel Cake');addCur();const ck=cart[cart.length-1].m.map(m=>m[0]).join();const exp=(6.5+5.45+3.99+2)*2+12.99+4.85;b1=b1&&b2&&ck=='Caramel Cake';document.title=`TEST ${Math.abs(sub()-exp)<.001&&b1?'PASS':'FAIL'} got ${money(sub())} exp ${money(exp)} reqBlocked=${b1} count=${$('.cc').textContent} stored=${JSON.parse(localStorage.getItem('legendsCart')).length}`}
 </script></body></html>
